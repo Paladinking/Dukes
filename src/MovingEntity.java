@@ -12,7 +12,7 @@ public abstract class MovingEntity extends Entity implements Tickable{
         destination = new Point(x,y);
     }
 
-    abstract void move();
+    abstract void move(Tile[][] tiles);
 
     void setDestination(int x,int y){
         destination.x = x;

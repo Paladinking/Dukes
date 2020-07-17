@@ -7,7 +7,9 @@ public class Peasant extends MovingEntity {
     private static final BufferedImage[] images = new BufferedImage[9];
     private static final BufferedImage[] held = new BufferedImage[1];
 
-
+    private int playernum;
+    private int influence;
+    private boolean influenced;
     static {
         try {
             images[0] = ImageIO.read(Game.class.getResource("assets/peasant.png")).getSubimage(0,0,64,128);
@@ -27,8 +29,13 @@ public class Peasant extends MovingEntity {
 
     }
 
-    Peasant(int x, int y) {
+    private final byte rand;
+
+    Peasant(int x, int y, byte rand,int playernum) {
         super(x, y, images[(int)(Math.random()*9)], held[0]);
+        this.rand = rand;
+        this.playernum = playernum;
+        if (playernum!=-1) influence = 1000;
     }
 
     @Override
@@ -37,17 +44,35 @@ public class Peasant extends MovingEntity {
         g.drawImage(heldItem,x+16,y,image.getWidth()/4,image.getHeight()/4,null);
     }
     @Override
-    void move() {
+    void move(Tile[][] tiles) {
+        int dx = 0,dy =0;
+       if (x-destination.x>=4)  dx-=4;
+       if (x-destination.x<=-4)  dx+=4;
+       if (y-destination.y>=4)  dy-=4;
+       if (y-destination.y<=-4)  dy+=4;
+       if (Tile.getTile(tiles,(x+dx)/64,(y+dy)/64).open()) {
+           x+=dx;
+           y+=dy;
+       }
 
     }
 
     @Override
     public void influence(Player player) {
-
+        if (playernum!=player.num){
+            playernum = player.num;
+            influence = 0;
+        } else {
+            if (influence<1000) influence+=100;
+        }
+        if (influence>=1000) destination = new Point(player.x,player.y);
+        influenced = true;
     }
 
     @Override
     public void tick(Tile[][] tiles) {
-        move();
+        move(tiles);
+        if (influence>0) influence--;
+        else playernum =-1;
     }
 }

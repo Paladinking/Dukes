@@ -5,6 +5,7 @@ import java.io.IOException;
 
 public class Hut extends Entity {
     static int count;
+    final byte rand;
     static final private BufferedImage[] images =new BufferedImage[1];
     public int influence;
     public int playernum;
@@ -19,13 +20,14 @@ public class Hut extends Entity {
 
 
 
-    Hut(int x,int y) {
+    Hut(int x,int y, byte rand) {
         super(images[0]);
         count++;
         this.x = x*64;
         this.y = y*64;
         this.playernum = -1;
         this.influence = 0;
+        this.rand = rand;
     }
     @Override
     public void draw(Graphics g){
@@ -46,7 +48,6 @@ public class Hut extends Entity {
             influence=0;
         }
         influence++;
-        System.out.println(x+":"+y);
         if (influence>=60){
             destroy = true;
         }

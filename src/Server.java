@@ -7,12 +7,11 @@ import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.Timer;
-import java.util.TimerTask;
 
 public class Server {
 
 
-    public static final int PLAYERS = 4;
+    public static final int PLAYERS = 2;
     public static void main(String[] args) throws IOException {
         DatagramSocket socket = new DatagramSocket(6066);
         ArrayList<ServerPlayer> players = new ArrayList<>();
@@ -62,9 +61,10 @@ public class Server {
                         if (r >= 48) {
                             int x = (int) (Math.random() * 30);
                             int y = (int) (Math.random() * 16);
-                            data.set(4, new Object[]{r - 47, x, y});
+                            byte rand = (byte)(Math.random()*Byte.MAX_VALUE*2);
+                            data.set(4, new Object[]{r - 47, x, y,rand});
                         } else {
-                            data.set(4, new Object[]{0, 0, 0});
+                            data.set(4, new Object[]{0, 0, 0, 0});
                         }
                     }
                     byte[] b;
@@ -79,24 +79,6 @@ public class Server {
                 }
             }
         }).start();
-        /*t.schedule(new TimerTask() {
-            @Override
-            public void run() {
-                try {
-                    for (ServerPlayer p : players) {
-                        byte[] b;
-                        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                        ObjectOutputStream oos = new ObjectOutputStream(baos);
-                        oos.writeObject(data);
-                        b = baos.toByteArray();
-                        p.setData(b);
-                        socket.send(p.packet);
-                    }
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-        }, 8, 8);*/
 
         System.out.println("done");
     }

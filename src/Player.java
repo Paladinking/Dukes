@@ -68,7 +68,7 @@ public class Player extends MovingEntity {
     }
 
     @Override
-    void move() {
+    void move(Tile[][] tiles) {
         //x += dx;
         //y += dy;
     }
@@ -95,6 +95,6 @@ public class Player extends MovingEntity {
                 }
             }
         }
-        move();
+        move(tiles);
     }
 }

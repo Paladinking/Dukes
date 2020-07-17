@@ -65,7 +65,6 @@ public class Game implements KeyListener {
             p.requestFocusInWindow();
             Timer t = new Timer("Loop");
             for (int i = 1; i <= Server.PLAYERS; i++) {
-
                 game.createEntity(new Player(100 * i, 100 * i, i - 1));
             }
             try {
@@ -180,7 +179,7 @@ public class Game implements KeyListener {
                 i--;
                 e.destroy();
                 if (e instanceof Hut){
-                    createEntity(new Peasant(e.x,e.y));
+                    createEntity(new Peasant(e.x,e.y,((Hut)e).rand));
                 }
             }
 
@@ -197,12 +196,13 @@ public class Game implements KeyListener {
         int i = (int) update[0];
         int x = (int) update[1];
         int y = (int) update[2];
+        byte rand = (byte) update[3];
         switch (i) {
             case 1:
                 if (tiles[x][y].isEmty() && Tree.count < 100) createEntity(new Tree(x, y));
                 break;
             case 2:
-                if (tiles[x][y].isEmty() && Hut.count < 100) createEntity(new Hut(x, y));
+                if (tiles[x][y].isEmty() && Hut.count < 100) createEntity(new Hut(x, y,rand));
         }
     }
 
@@ -270,7 +270,6 @@ public class Game implements KeyListener {
                 break;
         }
         if (e.getKeyCode() == KeyEvent.VK_ESCAPE) {
-            System.out.println(added);
             System.exit(0);
         }
 
