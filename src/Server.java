@@ -56,7 +56,7 @@ public class Server {
                     p.x+=dx;
                     p.y+=dy;
                     data.set(p.num, new Object[]{p.x, p.y,p.active});
-                    if (ticks==4) {
+                    if (ticks==8) {
                         ticks = 0;
                         int r = (int) (50 * Math.random());
                         if (r >= 48) {
@@ -67,12 +67,19 @@ public class Server {
                             data.set(4, new Object[]{0, 0, 0});
                         }
                     }
+                    byte[] b;
+                    ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                    ObjectOutputStream oos = new ObjectOutputStream(baos);
+                    oos.writeObject(data);
+                    b = baos.toByteArray();
+                    p.setData(b);
+                    socket.send(p.packet);
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
             }
         }).start();
-        t.schedule(new TimerTask() {
+        /*t.schedule(new TimerTask() {
             @Override
             public void run() {
                 try {
@@ -89,7 +96,7 @@ public class Server {
                     e.printStackTrace();
                 }
             }
-        }, 8, 8);
+        }, 8, 8);*/
 
         System.out.println("done");
     }

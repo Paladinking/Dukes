@@ -8,7 +8,6 @@ import java.io.ObjectInputStream;
 import java.net.*;
 import java.util.ArrayList;
 import java.util.Timer;
-import java.util.TimerTask;
 
 public class Game implements KeyListener {
     private final int width, height;
@@ -21,7 +20,6 @@ public class Game implements KeyListener {
     private byte team;
     private Tile[][] tiles;
     private long curTime = System.currentTimeMillis();
-    boolean received;
 
     private Game(int width, int height) {
         this.width = width;
@@ -100,18 +98,17 @@ public class Game implements KeyListener {
             }
         }
         keys[6] = team;
-        new Thread(() -> {
+       /* new Thread(() -> {
             while (true) {
                 try {
                     receive(socket);
                     added++;
-                    received = true;
                 } catch (IOException | ClassNotFoundException e) {
                     e.printStackTrace();
                 }
             }
 
-        }).start();
+        }).start();*/
         System.out.println("Your team is; " + team);
 
         return socket;
@@ -144,6 +141,13 @@ public class Game implements KeyListener {
             try {
                 DatagramPacket packet = new DatagramPacket(keys2, keys2.length, InetAddress.getByName("localhost"), 6066);
                 socket.send(packet);
+                new Thread(()->{
+                    try {
+                        receive(socket);
+                    } catch (IOException | ClassNotFoundException e) {
+                        e.printStackTrace();
+                    }
+                }).start();
             } catch (IOException e) {
                 e.printStackTrace();
             }
