@@ -179,7 +179,7 @@ public class Game implements KeyListener {
                 i--;
                 e.destroy();
                 if (e instanceof Hut){
-                    createEntity(new Peasant(e.x,e.y,((Hut)e).rand));
+                    createEntity(new Peasant(e.x,e.y,((Hut)e).rand,((Hut)e).playernum));
                 }
             }
 
