@@ -19,7 +19,9 @@ public class Game implements KeyListener {
     private byte[] keys;
     private byte team;
     private Tile[][] tiles;
-    private long curTime = System.currentTimeMillis();
+    private long currentTime  =System.currentTimeMillis();
+    private int ticks;
+    private int nrUpdates;
 
     private Game(int width, int height) {
         this.width = width;
@@ -97,17 +99,16 @@ public class Game implements KeyListener {
             }
         }
         keys[6] = team;
-       /* new Thread(() -> {
+       new Thread(() -> {
             while (true) {
                 try {
                     receive(socket);
-                    added++;
                 } catch (IOException | ClassNotFoundException e) {
                     e.printStackTrace();
                 }
             }
 
-        }).start();*/
+        }).start();
         System.out.println("Your team is; " + team);
 
         return socket;
@@ -140,13 +141,14 @@ public class Game implements KeyListener {
             try {
                 DatagramPacket packet = new DatagramPacket(keys2, keys2.length, InetAddress.getByName("localhost"), 6066);
                 socket.send(packet);
-                new Thread(()->{
+                /*new Thread(()->{
                     try {
                         receive(socket);
+                        nrUpdates++;
                     } catch (IOException | ClassNotFoundException e) {
                         e.printStackTrace();
                     }
-                }).start();
+                }).start();*/
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -165,11 +167,24 @@ public class Game implements KeyListener {
     private void draw(Graphics g) {
         g.setColor(Color.WHITE);
         g.fillRect(0, 0, width, height);
+        /*for (int i=0;i<tiles.length;i++){
+            for (int j =0;j<tiles[i].length;j++){
+                g.setColor(Tile.getTile(tiles,i,j).color);
+                g.fillRect(i*64,j*64,64,64);
+                Tile.getTile(tiles,i,j).color = Color.WHITE;
+
+            }
+
+        }*/
         for (Entity e : entities) e.draw(g);
         for (Player p : players) p.draw(g);
     }
 
     private void tick() {
+        //System.out.println(nrUpdates+":"+ticks);
+        ticks++;
+        System.out.println(ticks+": "+players.get(0).x+":"+players.get(0).y);
+        currentTime = System.currentTimeMillis();
         for (Tickable t : tickList) t.tick(tiles);
         for (int i=0;i<entities.size();i++){
             Entity e = entities.get(i);
@@ -196,7 +211,7 @@ public class Game implements KeyListener {
         int i = (int) update[0];
         int x = (int) update[1];
         int y = (int) update[2];
-        byte rand = (byte) update[3];
+        int rand = (int) update[3];
         switch (i) {
             case 1:
                 if (tiles[x][y].isEmty() && Tree.count < 100) createEntity(new Tree(x, y));

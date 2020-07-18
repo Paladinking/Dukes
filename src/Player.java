@@ -2,6 +2,7 @@ import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
+import java.util.ArrayList;
 
 public class Player extends MovingEntity {
     private int ox, oy;
@@ -9,6 +10,7 @@ public class Player extends MovingEntity {
     private final Color color;
     private boolean active;
     private static final BufferedImage[] images = new BufferedImage[8];
+    private ArrayList<MovingEntity> followers;
 
 
     static {
@@ -31,12 +33,12 @@ public class Player extends MovingEntity {
     @Override
     public void draw(Graphics g) {
         Graphics2D g2d = (Graphics2D) g;
-        g2d.translate(ox-image.getWidth()/4,oy-image.getHeight()/4);
-        g2d.drawImage(image,0,0,image.getWidth()/2,image.getHeight()/2,null);
-        if (!active) g2d.rotate(Math.PI/8);
-        g2d.drawImage(heldItem,32,0,heldItem.getWidth()/2,heldItem.getHeight()/2,null);
-        if (!active) g2d.rotate(-Math.PI/8);
-        g2d.translate(-ox+image.getWidth()/4,-oy+image.getHeight()/4);
+        g2d.translate(ox - image.getWidth() / 4, oy - image.getHeight() / 4);
+        g2d.drawImage(image, 0, 0, image.getWidth() / 2, image.getHeight() / 2, null);
+        if (!active) g2d.rotate(Math.PI / 8);
+        g2d.drawImage(heldItem, 32, 0, heldItem.getWidth() / 2, heldItem.getHeight() / 2, null);
+        if (!active) g2d.rotate(-Math.PI / 8);
+        g2d.translate(-ox + image.getWidth() / 4, -oy + image.getHeight() / 4);
     }
 
     @Override
@@ -47,6 +49,7 @@ public class Player extends MovingEntity {
 
     Player(int x, int y, int numb) {
         super(x, y, images[numb], images[4 + numb]);
+        followers = new ArrayList<>();
         this.ox = x;
         this.oy = y;
         this.num = numb;
@@ -67,6 +70,10 @@ public class Player extends MovingEntity {
         }
     }
 
+    void add(MovingEntity e) {
+        if (!followers.contains(e)) followers.add(e);
+    }
+
     @Override
     void move(Tile[][] tiles) {
         //x += dx;
@@ -77,22 +84,32 @@ public class Player extends MovingEntity {
     public void update(Object[] data) {
         x = (int) data[0];
         y = (int) data[1];
-        active = (boolean)data[2];
+        boolean a = (boolean) data[2];
+        if (a != active && active) {
+            for (MovingEntity e : followers) {
+                e.destination = new Point(e.x,e.y);
+            }
+            followers = new ArrayList<>();
+        }
+        active = a;
     }
 
     @Override
     public void tick(Tile[][] tiles) {
-        tiles[ox/64][oy/64].remove(this);
-        tiles[x/64][y/64].add(this);
+        tiles[ox / 64][oy / 64].remove(this);
+        tiles[x / 64][y / 64].add(this);
         ox = x;
         oy = y;
-        int tx = x/64;
-        int ty = y/64;
-        if (active){
-            for (int i=tx-1;i<=tx+1;i++){
-                for (int j = ty-1;j<=ty+1;j++){
-                    Tile.getTile(tiles,i,j).influence(this);
+        int tx = x / 64;
+        int ty = y / 64;
+        if (active) {
+            for (int i = tx - 1; i <= tx + 1; i++) {
+                for (int j = ty - 1; j <= ty + 1; j++) {
+                    Tile.getTile(tiles, i, j).influence(this);
                 }
+            }
+            for (MovingEntity e : followers) {
+                e.destination = new Point(x, y);
             }
         }
         move(tiles);

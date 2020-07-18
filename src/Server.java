@@ -61,7 +61,7 @@ public class Server {
                         if (r >= 48) {
                             int x = (int) (Math.random() * 30);
                             int y = (int) (Math.random() * 16);
-                            byte rand = (byte)(Math.random()*Byte.MAX_VALUE*2);
+                            int rand = (int)(Math.random()*Byte.MAX_VALUE*2);
                             data.set(4, new Object[]{r - 47, x, y,rand});
                         } else {
                             data.set(4, new Object[]{0, 0, 0, 0});

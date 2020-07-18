@@ -5,7 +5,7 @@ import java.io.IOException;
 
 public class Hut extends Entity {
     static int count;
-    final byte rand;
+    final int rand;
     static final private BufferedImage[] images =new BufferedImage[1];
     public int influence;
     public int playernum;
@@ -20,7 +20,7 @@ public class Hut extends Entity {
 
 
 
-    Hut(int x,int y, byte rand) {
+    Hut(int x,int y, int rand) {
         super(images[0]);
         count++;
         this.x = x*64;
