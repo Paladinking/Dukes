@@ -52,15 +52,20 @@ public class Peasant extends MovingEntity {
         if (destination.distance(x,y)<16) {
             if (tower==null){
                 Tile t = Tile.getTile(tiles,x/64,y/64);
-                ArrayList<Tower> towers = t.getTowers();
-                if (towers.size()==0) towers = game.getType(Tower.class);
+                ArrayList<Tower> towers = t.getTowers(playernum);
+                if (towers.size()==0) {
+                    towers = game.getType(Tower.class);
+                    for (int i = 0;i<towers.size();){
+                        if (towers.get(i).num==playernum) i++;
+                        else towers.remove(i);
+                    }
+                }
                 if (towers.size()>0) {
                     Tower tower = towers.get(0);
                     for (Tower t1 :towers){
                         if (new Point(x,y).distance(t1.x,t1.y)<new Point(x,y).distance(tower.x,tower.y)) tower = t1;
                     }
                     this.tower = tower;
-                    System.out.println(this.tower);
                 }
             }
             return;

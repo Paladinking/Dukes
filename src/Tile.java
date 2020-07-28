@@ -64,6 +64,12 @@ public class Tile {
        return towers;
     }
 
+    ArrayList<Tower> getTowers(int num){
+        ArrayList<Tower> t = new ArrayList<>();
+        for (Tower tower: towers) if (tower.num == num) t.add(tower);
+        return t;
+    }
+
     void removeTower(Tower e) {
         towers.remove(e);
     }

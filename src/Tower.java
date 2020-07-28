@@ -4,7 +4,7 @@ import java.awt.image.BufferedImage;
 import java.io.IOException;
 
 public class Tower extends Entity{
-    private final int num;
+    final int num;
 
 
     static final private BufferedImage[] images =new BufferedImage[1];
