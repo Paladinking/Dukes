@@ -4,11 +4,13 @@ import java.io.Serializable;
 
 public abstract class Entity implements Serializable {
     final BufferedImage image;
+    final Game game;
     int x,y;
     boolean destroy;
 
-    Entity(BufferedImage image) {
+    Entity(BufferedImage image, Game game) {
         this.image = image;
+        this.game = game;
         destroy =false;
     }
 

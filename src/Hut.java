@@ -20,8 +20,8 @@ public class Hut extends Entity {
 
 
 
-    Hut(int x,int y, int rand) {
-        super(images[0]);
+    Hut(int x,int y, int rand,Game game) {
+        super(images[0], game);
         count++;
         this.x = x*64;
         this.y = y*64;

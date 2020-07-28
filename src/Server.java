@@ -15,7 +15,7 @@ public class Server {
     public static void main(String[] args) throws IOException {
         DatagramSocket socket = new DatagramSocket(6066);
         ArrayList<ServerPlayer> players = new ArrayList<>();
-        byte map = (byte) (Math.random()*4);
+        byte map = (byte) (Math.random()*1);
         while (players.size() < PLAYERS) {
             DatagramPacket packet = new DatagramPacket(new byte[1], 1);
             socket.receive(packet);
@@ -31,51 +31,64 @@ public class Server {
         for (int i = 0; i < 4; i++) data.add(null);
         data.add(null);
         new Thread(() -> {
-            int ticks = 0;
             while (true) {
                 try {
-                    DatagramPacket packet = new DatagramPacket(new byte[7], 7);
-                    socket.receive(packet);
-                    byte[] bytes = packet.getData();
-                    ServerPlayer p = players.get(bytes[6]);
-                    for (int i = 0; i < p.keys.length; i++) {
-                        p.keys[i] = bytes[i] != 0;
-                    }
-                    int dx = 0, dy = 0;
-                    if (p.keys[0]) dy -= 4;
-                    if (p.keys[1]) dx -= 4;
-                    if (p.keys[2]) dy += 4;
-                    if (p.keys[3]) dx += 4;
-                    if (!p.keys[4]) p.releasedSpace = true;
-                    if (p.keys[4]&&p.releasedSpace){
-                        p.releasedSpace = false;
-                        p.active =!p.active;
-                    }
-                    ticks++;
-                    p.x+=dx;
-                    p.y+=dy;
-                    data.set(p.num, new Object[]{p.x, p.y,p.active});
-                    if (ticks==8) {
-                        ticks = 0;
-                        int r = (int) (50 * Math.random());
-                        if (r >= 48) {
-                            int x = (int) (Math.random() * 30);
-                            int y = (int) (Math.random() * 16);
-                            int rand = (int)(Math.random()*Byte.MAX_VALUE*2);
-                            data.set(4, new Object[]{r - 47, x, y,rand});
-                        } else {
-                            data.set(4, new Object[]{0, 0, 0, 0});
-                        }
-                    }
                     byte[] b;
                     ByteArrayOutputStream baos = new ByteArrayOutputStream();
                     ObjectOutputStream oos = new ObjectOutputStream(baos);
                     oos.writeObject(data);
                     b = baos.toByteArray();
-                    p.setData(b);
-                    socket.send(p.packet);
+                    for (ServerPlayer player:players) {
+                        player.setData(b);
+                        socket.send(player.packet);
+                    }
+                    Thread.sleep(16);
+                } catch (IOException | InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        }).start();
+        new Thread(()->{
+            int ticks = 0;
+            while (true) {
+                DatagramPacket packet = new DatagramPacket(new byte[7], 7);
+                try {
+                    socket.receive(packet);
                 } catch (IOException e) {
                     e.printStackTrace();
+                }
+                byte[] bytes = packet.getData();
+                ServerPlayer p = players.get(bytes[6]);
+                for (int i = 0; i < p.keys.length; i++) {
+                    p.keys[i] = bytes[i] != 0;
+                }
+                int dx = 0, dy = 0;
+                if (p.keys[0]) dy -= 4;
+                if (p.keys[1]) dx -= 4;
+                if (p.keys[2]) dy += 4;
+                if (p.keys[3]) dx += 4;
+                if (!p.keys[4]) p.releasedSpace = true;
+                if (p.keys[4] && p.releasedSpace) {
+                    p.releasedSpace = false;
+                    p.active = !p.active;
+                }
+                p.pressedE = p.keys[5];
+                //System.out.println(p.pressedE);
+                ticks++;
+                p.x += dx;
+                p.y += dy;
+                data.set(p.num, new Object[]{p.x, p.y, p.active,p.pressedE});
+                if (ticks == 8) {
+                    ticks = 0;
+                    int r = (int) (50 * Math.random());
+                    if (r >= 48) {
+                        int x = (int) (Math.random() * 30);
+                        int y = (int) (Math.random() * 16);
+                        int rand = (int) (Math.random() * Byte.MAX_VALUE * 2);
+                        data.set(4, new Object[]{r - 47, x, y, rand});
+                    } else {
+                        data.set(4, new Object[]{0, 0, 0, 0});
+                    }
                 }
             }
         }).start();
@@ -90,6 +103,7 @@ public class Server {
         final boolean[] keys;
         int x, y;
         boolean active;
+        boolean pressedE,releasedE;
         boolean releasedSpace;
 
         ServerPlayer(DatagramPacket packet) {

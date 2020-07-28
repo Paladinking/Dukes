@@ -18,8 +18,8 @@ public class Rock extends Solid {
     }
 
 
-    Rock(int x, int y) {
-        super(images[(int)(Math.random()*4)]);
+    Rock(int x, int y,Game game) {
+        super(images[(int)(Math.random()*4)],game);
         count++;
         this.x = x*64;
         this.y = y*64;

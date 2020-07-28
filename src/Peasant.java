@@ -2,6 +2,7 @@ import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
+import java.util.ArrayList;
 
 public class Peasant extends MovingEntity {
     private static final BufferedImage[] images = new BufferedImage[9];
@@ -10,6 +11,7 @@ public class Peasant extends MovingEntity {
     private int playernum;
     private int influence;
     private boolean influenced;
+    private Tower tower;
 
     static {
         try {
@@ -32,8 +34,8 @@ public class Peasant extends MovingEntity {
 
     private final int rand;
 
-    Peasant(int x, int y, int rand, int playernum) {
-        super(x, y, images[(int) (Math.random() * 9)], held[0]);
+    Peasant(int x, int y, int rand, int playernum, Game game) {
+        super(x, y, images[(int) (Math.random() * 9)], held[0],game);
         this.rand = rand;
         this.playernum = playernum;
         if (playernum != -1) influence = 1000;
@@ -47,7 +49,22 @@ public class Peasant extends MovingEntity {
 
     @Override
     void move(Tile[][] tiles) {
-        if (destination.distance(x,y)<16) return;
+        if (destination.distance(x,y)<16) {
+            if (tower==null){
+                Tile t = Tile.getTile(tiles,x/64,y/64);
+                ArrayList<Tower> towers = t.getTowers();
+                if (towers.size()==0) towers = game.getType(Tower.class);
+                if (towers.size()>0) {
+                    Tower tower = towers.get(0);
+                    for (Tower t1 :towers){
+                        if (new Point(x,y).distance(t1.x,t1.y)<new Point(x,y).distance(tower.x,tower.y)) tower = t1;
+                    }
+                    this.tower = tower;
+                    System.out.println(this.tower);
+                }
+            }
+            return;
+        }
         double angle = Math.atan2(destination.y-y,destination.x-x);
         int dx = (int)(4*Math.cos(angle)), dy = (int)(4*Math.sin(angle));
         if (Tile.getTile(tiles, (x + dx) / 64, (y + dy) / 64).open()) {
@@ -57,8 +74,11 @@ public class Peasant extends MovingEntity {
                     if (e==this) continue;
                     if (new Point(x+dx,y+dy).distance(e.x,e.y)<16){
                         canmove = false;
-                        if (dx>0&&(x-e.x)/dx>0&&Math.abs(dx)>=Math.abs(dy)) canmove = true;
-                        else if (dy>0&&(y-e.y)/dy>0&&Math.abs(dx)<=Math.abs(dy)) canmove = true;
+                        if (Game.pause){
+                            System.currentTimeMillis();
+                        }
+                        if (dx>0&&(x-e.x)/dx>0) canmove = true;
+                        else if (dy>0&&(y-e.y)/dy>0) canmove = true;
 
                     }
                 }
@@ -88,6 +108,7 @@ public class Peasant extends MovingEntity {
 
     @Override
     public void influence(Player player) {
+        tower =null;
         if (playernum != player.num) {
             playernum = player.num;
             influence = 0;

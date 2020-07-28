@@ -4,8 +4,8 @@ import java.awt.image.BufferedImage;
 public abstract class MovingEntity extends Entity implements Tickable{
     Point destination;
     final BufferedImage heldItem;
-    MovingEntity(int x, int y, BufferedImage image,BufferedImage heldItem){
-        super(image);
+    MovingEntity(int x, int y, BufferedImage image,BufferedImage heldItem,Game game){
+        super(image, game);
         this.heldItem = heldItem;
         this.x = x;
         this.y = y;

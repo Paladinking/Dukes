@@ -19,8 +19,8 @@ public class Tree extends Solid {
     }
 
 
-    Tree(int x,int y ) {
-        super(images[0]);
+    Tree(int x,int y,Game game ) {
+        super(images[0],game);
         count++;
         this.x = x*64;
         this.y = y*64;

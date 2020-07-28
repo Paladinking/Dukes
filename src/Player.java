@@ -8,9 +8,10 @@ public class Player extends MovingEntity {
     private int ox, oy;
     final int num;
     private final Color color;
-    private boolean active;
+    private boolean active,tower,towerPut;
     private static final BufferedImage[] images = new BufferedImage[8];
     private ArrayList<MovingEntity> followers;
+    private ArrayList<Peasant> peasants;
 
 
     static {
@@ -47,9 +48,10 @@ public class Player extends MovingEntity {
     }
 
 
-    Player(int x, int y, int numb) {
-        super(x, y, images[numb], images[4 + numb]);
+    Player(int x, int y, int numb, Game game) {
+        super(x, y, images[numb], images[4 + numb],game);
         followers = new ArrayList<>();
+        peasants = new ArrayList<>();
         this.ox = x;
         this.oy = y;
         this.num = numb;
@@ -72,6 +74,8 @@ public class Player extends MovingEntity {
 
     void add(MovingEntity e) {
         if (!followers.contains(e)) followers.add(e);
+        else return;
+        if (e instanceof Peasant) peasants.add((Peasant)e);
     }
 
     @Override
@@ -85,13 +89,17 @@ public class Player extends MovingEntity {
         x = (int) data[0];
         y = (int) data[1];
         boolean a = (boolean) data[2];
+        boolean ePressed = (boolean) data[3];
         if (a != active && active) {
             for (MovingEntity e : followers) {
                 e.destination = new Point(e.x,e.y);
             }
             followers = new ArrayList<>();
+            peasants = new ArrayList<>();
         }
         active = a;
+        if (!ePressed) tower = towerPut= false;
+        else tower = !towerPut;
     }
 
     @Override
@@ -113,5 +121,14 @@ public class Player extends MovingEntity {
             }
         }
         move(tiles);
+        if (tower&&peasants.size()>=3){
+            for (int i = 0; i < 3; i++) {
+                Peasant p = peasants.get(0);
+                followers.remove(p);
+                peasants.remove(0);
+                p.destroy = true;
+            }
+            game.createTower(x,y,num);
+        }
     }
 }

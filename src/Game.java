@@ -15,13 +15,16 @@ public class Game implements KeyListener {
     private ArrayList<Tickable> tickList;
     private ArrayList<Entity> entities;
     private ArrayList<Object[]> updates;
+    private ArrayList<Entity> createQue;
     private ArrayList<Player> players;
     private byte[] keys;
     private byte team;
     private Tile[][] tiles;
-    private long currentTime  =System.currentTimeMillis();
+    private long currentTime = System.currentTimeMillis();
     private int ticks;
     private int nrUpdates;
+    public static boolean pause;
+
 
     private Game(int width, int height) {
         this.width = width;
@@ -30,6 +33,7 @@ public class Game implements KeyListener {
         this.entities = new ArrayList<>();
         this.updates = new ArrayList<>();
         this.players = new ArrayList<>();
+        this.createQue = new ArrayList<>();
         tiles = new Tile[30][17];
         for (int i = 0; i < 30; i++) {
             for (int j = 0; j < 17; j++) {
@@ -37,10 +41,6 @@ public class Game implements KeyListener {
             }
         }
         keys = new byte[7];
-        createEntity(new Rock(10, 10));
-        createEntity(new Rock(11, 10));
-        createEntity(new Rock(12, 10));
-        createEntity(new Rock(13, 10));
     }
 
 
@@ -67,7 +67,7 @@ public class Game implements KeyListener {
             p.requestFocusInWindow();
             Timer t = new Timer("Loop");
             for (int i = 1; i <= Server.PLAYERS; i++) {
-                game.createEntity(new Player(100 * i, 100 * i, i - 1));
+                game.createEntity(new Player(100 * i, 100 * i, i - 1, game));
             }
             try {
                 DatagramSocket socket = game.connect();
@@ -94,12 +94,13 @@ public class Game implements KeyListener {
         int[][] tmap = Maps.getMap(map);
         for (int i = 0; i < 30; i++) {
             for (int j = 0; j < 17; j++) {
-                if (tmap[i][j] == 1) createEntity(new Rock(i, j));
-                if (tmap[i][j] == 2) createEntity(new Tree(i, j));
+                if (tmap[i][j] == 1) createEntity(new Rock(i, j,this));
+                if (tmap[i][j] == 2) createEntity(new Tree(i, j,this));
             }
         }
         keys[6] = team;
-       new Thread(() -> {
+       /*new Thread(() -> {
+
             while (true) {
                 try {
                     receive(socket);
@@ -108,7 +109,7 @@ public class Game implements KeyListener {
                 }
             }
 
-        }).start();
+        }).start();*/
         System.out.println("Your team is; " + team);
 
         return socket;
@@ -124,6 +125,11 @@ public class Game implements KeyListener {
 
     private void loop(JPanel p, DatagramSocket socket) {
         while (true) {
+            try {
+                receive(socket);
+            } catch (IOException | ClassNotFoundException e) {
+                e.printStackTrace();
+            }
             tick();
             p.repaint();
             byte[] keys2 = keys;
@@ -132,7 +138,7 @@ public class Game implements KeyListener {
             if (keys[1] == 1) dx -= 4;
             if (keys[2] == 1) dy += 4;
             if (keys[3] == 1) dx += 4;
-            if (!tiles[(players.get(team).x + dx) / 64][(players.get(team).y + dy) / 64].open()) {
+            if (!Tile.getTile(tiles, (players.get(team).x + dx) / 64, (players.get(team).y + dy) / 64).open()) {
                 keys2[0] = 0;
                 keys2[1] = 0;
                 keys2[2] = 0;
@@ -153,12 +159,6 @@ public class Game implements KeyListener {
                 e.printStackTrace();
             }
 
-            try {
-                Thread.sleep(16);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-
         }
 
 
@@ -167,38 +167,41 @@ public class Game implements KeyListener {
     private void draw(Graphics g) {
         g.setColor(Color.WHITE);
         g.fillRect(0, 0, width, height);
-        /*for (int i=0;i<tiles.length;i++){
+        for (int i=0;i<tiles.length;i++){
             for (int j =0;j<tiles[i].length;j++){
                 g.setColor(Tile.getTile(tiles,i,j).color);
                 g.fillRect(i*64,j*64,64,64);
-                Tile.getTile(tiles,i,j).color = Color.WHITE;
-
             }
-
-        }*/
+        }
         for (Entity e : entities) e.draw(g);
         for (Player p : players) p.draw(g);
     }
 
     private void tick() {
-        //System.out.println(nrUpdates+":"+ticks);
         ticks++;
-        System.out.println(ticks+": "+players.get(0).x+":"+players.get(0).y);
         currentTime = System.currentTimeMillis();
         for (Tickable t : tickList) t.tick(tiles);
-        for (int i=0;i<entities.size();i++){
+        for (int i = 0; i < entities.size(); i++) {
             Entity e = entities.get(i);
             if (e.destroy) {
                 tickList.remove(e);
                 entities.remove(e);
                 i--;
                 e.destroy();
-                if (e instanceof Hut){
-                    createEntity(new Peasant(e.x,e.y,((Hut)e).rand,((Hut)e).playernum));
+                if (e instanceof Hut) {
+                    createEntity(new Peasant(e.x, e.y, ((Hut) e).rand, ((Hut) e).playernum,this));
+                } else if (e instanceof Tower){
+                    for (int i1 = e.x / 64 - 4; i1 <= e.x / 64 + 4; i1++) {
+                        for (int j = e.y / 64 - 4; j <= e.y / 64 + 4; j++) {
+                            Tile.getTile(tiles,i1,j).removeTower((Tower)e);
+                        }
+                    }
                 }
             }
 
         }
+        for (Entity e : createQue) createEntity(e);
+        createQue.clear();
         updateAll();
     }
 
@@ -214,11 +217,18 @@ public class Game implements KeyListener {
         int rand = (int) update[3];
         switch (i) {
             case 1:
-                if (tiles[x][y].isEmty() && Tree.count < 100) createEntity(new Tree(x, y));
+                if (tiles[x][y].isEmty() && Tree.count < 100) createEntity(new Tree(x, y,this));
                 break;
             case 2:
-                if (tiles[x][y].isEmty() && Hut.count < 100) createEntity(new Hut(x, y,rand));
+                if (tiles[x][y].isEmty() && Hut.count < 100) createEntity(new Hut(x, y, rand,this));
         }
+    }
+    <C extends Entity>ArrayList<C> getType(Class c){
+        ArrayList<C> list = new ArrayList<>();
+        for (Entity e: entities){
+            if (c.isInstance(e)) list.add((C)e);
+        }
+        return list;
     }
 
     private Entity createEntity(Entity e) {
@@ -230,6 +240,15 @@ public class Game implements KeyListener {
         }
         if (e instanceof Tickable) tickList.add((Tickable) e);
         tiles[e.x / 64][e.y / 64].add(e);
+        if (e instanceof Tower) {
+            Tower t = (Tower) e;
+            for (int i = e.x / 64 - 4; i <= e.x / 64 + 4; i++) {
+                for (int j = e.y / 64 - 4; j <= e.y / 64 + 4; j++) {
+                    if ((i-e.x/64)*(i-e.x/64)+(j-e.y/64)*(j-e.y/64)>5) continue;
+                    Tile.getTile(tiles,i,j).addTower(t);
+                }
+            }
+        }
         return e;
     }
 
@@ -259,6 +278,9 @@ public class Game implements KeyListener {
             case KeyEvent.VK_E:
                 keys[5] = 1;
                 break;
+            case KeyEvent.VK_P:
+                pause = true;
+                break;
         }
     }
 
@@ -283,10 +305,17 @@ public class Game implements KeyListener {
             case KeyEvent.VK_E:
                 keys[5] = 0;
                 break;
+            case KeyEvent.VK_P:
+                pause = false;
+                break;
         }
         if (e.getKeyCode() == KeyEvent.VK_ESCAPE) {
             System.exit(0);
         }
 
+    }
+
+    public void createTower(int x, int y, int playerNumb) {
+        createQue.add(new Tower(x, y, playerNumb,this));
     }
 }

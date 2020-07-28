@@ -24,6 +24,10 @@ public class Tile {
     void remove(Entity e) {
         entities.remove(e);
     }
+    void addTower(Tower t){
+        towers.add(t);
+        color = Color.red;
+    }
 
 
     public boolean isEmty() {
@@ -56,4 +60,11 @@ public class Tile {
         return entities;
     }
 
+    ArrayList<Tower> getTowers() {
+       return towers;
+    }
+
+    void removeTower(Tower e) {
+        towers.remove(e);
+    }
 }
